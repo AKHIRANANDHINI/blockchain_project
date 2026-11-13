@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% block title %}Scan Medicine Barcode{% endblock %}{% block content %}
+<div class="narrow"><h1>Scan / Check Medicine</h1>
+<p class="text-secondary">Scan a package barcode or enter its barcode/batch number to check the registered expiry record.</p>
+<div class="card p-4 mb-3"><form method="post" id="lookup-form">
+<label class="form-label">Barcode or batch number</label>
+<div class="input-group"><input class="form-control" name="barcode" id="lookup-code" value="{{scanned}}" placeholder="Scan or enter code" required><button class="btn btn-primary">Check</button></div></form>
+<button class="btn btn-outline-primary mt-3" type="button" onclick="startLookupScanner()">Open camera scanner</button>
+<div id="lookup-reader" class="scanner-box mt-3"></div><div id="lookup-reader-status" aria-live="polite"></div>
+<hr class="my-4"><h3 class="h5">Identify medicine from its printed label</h3>
+<p class="small text-secondary">Tap the button, point the camera at the medicine strip/box label, and capture the text. The demo tries to recognize a known medicine name and show its registered record plus general information.</p>
+<div class="border rounded p-3 mb-3 bg-light">
+<label class="form-label fw-semibold" for="medicine-photo">Upload tablet strip / medicine box photo</label>
+<input class="form-control" type="file" id="medicine-photo" accept="image/*" capture="environment" onchange="previewMedicinePhoto(event)">
+<div class="form-text">Clear photo lo medicine name, composition, EXP date kanipinchela upload cheyyi. Loose tablet photo tho exact medicine-ni reliable-ga identify cheyyalem.</div>
+<div class="small mt-2"><a href="{{ url_for('static', filename='demo_paracetamol_strip_sample.png') }}" target="_blank" rel="noopener">Open sample medicine-strip image for demo testing</a></div>
+<img id="medicine-photo-preview" alt="Medicine label preview" class="img-fluid rounded mt-3" style="display:none;max-height:280px">
+<button class="btn btn-success mt-3" type="button" id="photo-identify-btn" onclick="identifyMedicineFromPhoto()">🖼️ Identify from Photo & Show Details</button>
+</div>
+<div id="photo-identify-status" class="mt-2" aria-live="polite"></div><div id="photo-identify-result" class="mt-3"></div>
+<button class="btn btn-primary" type="button" id="identify-start" onclick="startMedicineCamera()">📷 Tap to Identify Medicine & Read Details</button>
+<button class="btn btn-outline-primary ms-2" type="button" id="identify-capture" onclick="identifyMedicineFromLabel()" disabled>Capture & Identify</button>
+<video id="identify-video" class="w-100 mt-3" style="display:none;max-height:320px;background:#111;border-radius:8px" autoplay playsinline></video>
+<canvas id="identify-canvas" style="display:none"></canvas><div id="identify-status" class="mt-3" aria-live="polite"></div><div id="identify-result" class="mt-3"></div>
+<hr class="my-4"><h3 class="h5">No barcode? Read expiry printed on the package</h3>
+<p class="small text-secondary">Point the camera at the medicine strip/box where EXP or Expiry is printed. A loose tablet alone usually has no readable expiry information.</p>
+<button class="btn btn-outline-secondary" type="button" id="ocr-start" onclick="startExpiryCamera()">Open expiry-text camera</button>
+<button class="btn btn-primary" type="button" id="ocr-capture" onclick="readExpiryText()" disabled>Capture & read expiry</button>
+<button class="btn btn-outline-danger" type="button" onclick="stopExpiryCamera()">Stop camera</button>
+<video id="expiry-video" class="w-100 mt-3" style="display:none;max-height:320px;background:#111;border-radius:8px" autoplay playsinline></video>
+<canvas id="expiry-canvas" style="display:none"></canvas><div id="expiry-status" class="mt-3" aria-live="polite"></div><div id="expiry-ocr-text" class="small text-secondary"></div>
+</div>
+{% if state %}<div class="card p-4">{% if medicine %}
+<span class="badge s-{{state|lower|replace(' ','-')}}">{{state}}</span><h2 class="h4 mt-3">{{medicine.name}}</h2>
+<p class="text-secondary">{{medicine.manufacturer}}</p><p><b>Batch:</b> {{medicine.batch_no}}</p>
+<p><b>Manufacturing date:</b> {{medicine.mfg_date}}</p><p><b>Expiry date:</b> {{medicine.expiry_date}}</p><p><b>Composition:</b> {{medicine.composition or "Check printed label"}}</p><p><b>Sample price:</b> {{medicine.price or "Not entered"}}</p>
+<div class="alert alert-light border"><b>General description & use</b><p class="mb-1">{{ medicine_info(medicine.name).description }}</p><b>Important safety note</b><p class="mb-0">{{ medicine_info(medicine.name).warning }}</p></div>
+{% if medicine.barcode %}<p><b>Barcode:</b> {{medicine.barcode}}</p>{% endif %}
+{% else %}<div class="alert alert-warning mb-0"><b>Not Found</b><br>This code is not registered. It does not mean the medicine is expired. Check the package expiry date or ask a pharmacist.</div>{% endif %}</div>{% endif %}
+<p class="small text-danger mt-3">A normal barcode may identify only the product, not its batch or expiry date. This demo checks registered records; it does not query a live medicine registry.</p></div>
+{% endblock %}
